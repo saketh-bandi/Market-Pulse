@@ -1,0 +1,348 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Search, TrendingUp, TrendingDown, Activity, Database, Wifi, Zap } from 'lucide-react'
+import            {/* 🎯 REGIME INDICATOR - Market Context */}
+            {analysis.data['🔬 ADVANCED METRICS'] && analysis.data['⚖️ DYNAMIC WEIGHTS'] && (
+              <RegimeIndicator 
+                regime={analysis.data['🔬 ADVANCED METRICS']?.['Market Regime']?.split(' ')[0] || 'NORMAL'}
+                vix={parseFloat(analysis.data['🔬 ADVANCED METRICS']?.['Market Regime']?.match(/\d+\.\d+/)?.[0] || '20')}
+                weights={analysis.data['⚖️ DYNAMIC WEIGHTS']}
+              />
+            )}art from '../components/GaugeChart'
+import SignalDisplay from '../components/SignalDisplay'
+import RegimeIndicator from '../components/RegimeIndicator'
+
+interface AnalysisResult {
+  ticker: string
+  source: string
+  data: {
+    '🎯 TICKER': string
+    '📊 FINAL SCORE': string
+    '🎪 TRADING SIGNAL': string
+    '🎯 CONFIDENCE': string
+    '📋 COMPONENT SCORES': {
+      '💭 Sentiment': string
+      '🚀 Gamma': string
+      '⚖️ Volume Bias': string
+      '💰 Valuation': string
+    }
+    '🔬 ADVANCED METRICS'?: {
+      'Market Regime': string
+      'Linear Score': string
+      'Non-Linear Score': string
+      'Z-Scores': string
+    }
+    '⚖️ DYNAMIC WEIGHTS'?: {
+      sentiment: number
+      gamma: number
+      volume: number
+      valuation: number
+    }
+    '🚀 ALGORITHM'?: string
+  }
+}
+
+export default function MarketPulseTerminal() {
+  const [ticker, setTicker] = useState('NVDA')
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const analyzeStock = async () => {
+    if (!ticker.trim()) return
+    
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/analyze/${ticker.toUpperCase()}`)
+      
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      setAnalysis(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getSignalColor = (signal: string) => {
+    if (!signal) return 'text-yellow-400 border-yellow-400'
+    if (signal.includes('BUY')) return 'text-green-400 border-green-400'
+    if (signal.includes('SELL')) return 'text-red-400 border-red-400'
+    return 'text-yellow-400 border-yellow-400'
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 75) return 'text-green-400'
+    if (score <= 25) return 'text-red-400'
+    return 'text-yellow-400'
+  }
+
+  return (
+    <div style={{ minHeight: '100vh' }}>
+      {/* Header */}
+      <header className="header">
+        <div className="container">
+          <div className="header-content">
+            <div className="logo">
+              <Activity size={32} color="#22c55e" />
+              <div>
+                <h1>MarketPulse Terminal</h1>
+                <p>Professional Financial Intelligence Platform</p>
+              </div>
+            </div>
+            
+            <div className="status">
+              <div className="status-item">
+                <Wifi size={16} color="#22c55e" />
+                <span>API Connected</span>
+              </div>
+              <div className="status-item">
+                <Database size={16} color="#3b82f6" />
+                <span>Cache Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Search Section */}
+        <div className="mb-8">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Stock Analysis</h2>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1 max-w-md">
+                <input
+                  type="text"
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  placeholder="Enter ticker (NVDA, TSLA, AAPL)"
+                  className="w-full bg-gray-800/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-200"
+                  onKeyPress={(e) => e.key === 'Enter' && analyzeStock()}
+                />
+              </div>
+              <button
+                onClick={analyzeStock}
+                disabled={loading || !ticker.trim()}
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-green-500/25"
+              >
+                <Search className="h-5 w-5" />
+                <span>{loading ? 'Analyzing...' : 'Analyze'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-8 max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-red-900/60 to-red-800/60 backdrop-blur-sm border border-red-500/30 rounded-xl p-4 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="text-red-400">⚠️</div>
+                <p className="text-red-200 font-medium">Error: {error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Results */}
+        {analysis && (
+          <div className="max-w-7xl mx-auto space-y-8 animate-fadeInUp">
+            
+            {/* 🚀 THE BIG VERDICT - Pro Style Signal Display */}
+            <SignalDisplay 
+              signal={analysis.data['🎪 TRADING SIGNAL'] || ''}
+              score={analysis.data['📊 FINAL SCORE'] ? parseFloat(analysis.data['📊 FINAL SCORE']) : 0}
+              confidence={analysis.data['🎯 CONFIDENCE'] || ''}
+              ticker={analysis.data['🎯 TICKER']?.replace('🎯 ', '') || analysis.ticker}
+            />
+
+            {/* 🎯 REGIME INDICATOR - Market Context */}
+            {analysis.data['� ADVANCED METRICS'] && analysis.data['⚖️ DYNAMIC WEIGHTS'] && (
+              <RegimeIndicator 
+                regime={analysis.data['🔬 ADVANCED METRICS']['Market Regime']?.split(' ')[0] || 'NORMAL'}
+                vix={parseFloat(analysis.data['🔬 ADVANCED METRICS']['Market Regime']?.match(/\d+\.\d+/)?.[0] || '20')}
+                weights={analysis.data['⚖️ DYNAMIC WEIGHTS']}
+              />
+            )}
+
+            {/* 📊 PROFESSIONAL GAUGE DASHBOARD */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-sm border border-gray-600/30 rounded-2xl p-8 shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <Zap className="text-green-400" size={28} />
+                  Component Analysis Dashboard
+                </h3>
+                <div className="text-sm text-gray-400 flex items-center gap-2">
+                  <Database size={16} className="text-blue-400" />
+                  {analysis.source === 'cache' ? 'Cached Data' : 'Live Analysis'}
+                </div>
+              </div>
+              
+              {/* Gauge Grid - The Money Shot */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {analysis.data['📋 COMPONENT SCORES'] && Object.entries(analysis.data['📋 COMPONENT SCORES']).map(([component, score]) => {
+                  const cleanComponent = component.replace(/^[💭🚀⚖️💰]\s*/, '')
+                  const numericScore = score && typeof score === 'string' ? parseFloat(score.split('/')[0]) : 0
+                  
+                  // Custom colors for each component
+                  const componentColors = {
+                    'Sentiment': '#f59e0b',    // Amber
+                    'Gamma': '#ef4444',        // Red  
+                    'Volume Bias': '#3b82f6', // Blue
+                    'Valuation': '#10b981'     // Emerald
+                  }
+                  
+                  return (
+                    <div key={component} className="bg-gray-800/40 rounded-2xl p-6 border border-gray-700/50 hover:border-gray-600/70 transition-all duration-300">
+                      <GaugeChart 
+                        value={numericScore}
+                        title={cleanComponent}
+                        color={componentColors[cleanComponent as keyof typeof componentColors]}
+                      />
+                      <div className="mt-4 text-center">
+                        <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
+                          Raw Score
+                        </div>
+                        <div className="text-white text-lg font-bold">
+                          {score ? String(score) : 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Advanced Metrics (NEW) */}
+            {analysis.data['🔬 ADVANCED METRICS'] && (
+              <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-blue-300 mb-4 flex items-center gap-2">
+                  🚀 Hedge Fund Metrics
+                  <span className="text-xs bg-blue-500/20 px-2 py-1 rounded-full">
+                    {analysis.data['🚀 ALGORITHM'] || 'Advanced'}
+                  </span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-gray-800/40 rounded-xl p-3">
+                    <div className="text-blue-300 text-xs font-medium mb-1">Market Regime</div>
+                    <div className="text-white font-bold text-sm">
+                      {analysis.data['🔬 ADVANCED METRICS']['Market Regime']?.replace(/\(VIX:.*\)/, '') || 'Normal'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/40 rounded-xl p-3">
+                    <div className="text-green-300 text-xs font-medium mb-1">Linear Score</div>
+                    <div className="text-white font-bold text-sm">
+                      {analysis.data['🔬 ADVANCED METRICS']['Linear Score'] || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/40 rounded-xl p-3">
+                    <div className="text-purple-300 text-xs font-medium mb-1">Non-Linear Score</div>
+                    <div className="text-white font-bold text-sm">
+                      {analysis.data['🔬 ADVANCED METRICS']['Non-Linear Score'] || 'N/A'}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/40 rounded-xl p-3">
+                    <div className="text-yellow-300 text-xs font-medium mb-1">Z-Scores</div>
+                    <div className="text-white font-bold text-xs">
+                      {analysis.data['🔬 ADVANCED METRICS']['Z-Scores'] || 'N/A'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Dynamic Weights Visualization */}
+                {analysis.data['⚖️ DYNAMIC WEIGHTS'] && (
+                  <div className="bg-gray-800/40 rounded-xl p-4">
+                    <div className="text-cyan-300 text-sm font-medium mb-3">Dynamic Regime Weights</div>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      <div className="text-center">
+                        <div className="text-gray-400">Sentiment</div>
+                        <div className="text-white font-bold">
+                          {(analysis.data['⚖️ DYNAMIC WEIGHTS'].sentiment * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-gray-400">Gamma</div>
+                        <div className="text-white font-bold">
+                          {(analysis.data['⚖️ DYNAMIC WEIGHTS'].gamma * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-gray-400">Volume</div>
+                        <div className="text-white font-bold">
+                          {(analysis.data['⚖️ DYNAMIC WEIGHTS'].volume * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-gray-400">Valuation</div>
+                        <div className="text-white font-bold">
+                          {(analysis.data['⚖️ DYNAMIC WEIGHTS'].valuation * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Analysis Summary */}
+            <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm border border-gray-600/30 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-white mb-6">Hedge Fund Algorithm Insights</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-sm">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-green-400 mb-3 flex items-center gap-2">
+                    <Activity size={16} />
+                    Advanced Features
+                  </h4>
+                  <div className="space-y-2 text-gray-300">
+                    <div className="flex justify-between py-1">
+                      <span>Dynamic Weighting</span>
+                      <span className="text-gray-400">VIX-based regime detection</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Non-Linear Math</span>
+                      <span className="text-gray-400">Sigmoid activation functions</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Z-Score Normalization</span>
+                      <span className="text-gray-400">Statistical standardization</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Regime Filtering</span>
+                      <span className="text-gray-400">Fear vs complacency logic</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                    <TrendingUp size={16} />
+                    Market Regimes
+                  </h4>
+                  <div className="space-y-2 text-gray-300 text-xs leading-relaxed">
+                    <p><strong className="text-red-300">Fear (VIX &gt;30):</strong> Trust math over sentiment. Gamma-weighted.</p>
+                    <p><strong className="text-green-300">Complacency (VIX &lt;15):</strong> Sentiment drives trends. Hype-weighted.</p>
+                    <p><strong className="text-yellow-300">Normal:</strong> Balanced approach with standard weights.</p>
+                    <p className="text-gray-400">• Non-linear combination prevents single-factor dominance</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-12 pt-8 border-t border-gray-700 text-center text-sm text-gray-400">
+          <p>MarketPulse Terminal v2.0 - Professional Financial Intelligence Platform</p>
+          <p className="mt-1">Not financial advice. For informational purposes only.</p>
+        </footer>
+      </main>
+    </div>
+  )
+}

@@ -1,0 +1,13 @@
+yfinance
+pandas
+numpy
+requests
+praw
+py_vollib
+scipy
+python-dotenv
+plotly
+fastapi
+uvicorn[standard]
+sqlalchemy
+nltk
