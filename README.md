@@ -2,7 +2,7 @@
 
 **Hedge Fund Grade Financial Intelligence Platform**
 
-A sophisticated algorithmic trading signal generator that combines sentiment analysis, options flow data, and fundamental valuation into actionable trading insights using advanced mathematical techniques.
+A sophisticated algorithmic trading signal generator that combines technical analysis, options flow data, and fundamental valuation into actionable trading insights using institutional-grade mathematical techniques.
 
 ## 🎯 Features
 
@@ -13,7 +13,7 @@ A sophisticated algorithmic trading signal generator that combines sentiment ana
 - **Multi-Modal Data Fusion**: Combines 4 different data types into unified signals
 
 ### Data Sources
-- 📊 **Sentiment Analysis**: Reddit sentiment via PRAW + VADER
+- 📊 **Technical Analysis**: VWAP, RSI, SMA trend analysis
 - 🎲 **Options Flow**: Gamma sensitivity and Put/Call ratios
 - 💰 **Valuation**: P/E-based fundamental analysis  
 - 📈 **Market Regime**: Real-time VIX fear index
@@ -75,7 +75,7 @@ A sophisticated algorithmic trading signal generator that combines sentiment ana
 
 | Component | Weight | Description |
 |-----------|--------|-------------|
-| **Sentiment** | 10-40% | Social media sentiment analysis |
+| **Technical** | 25-45% | VWAP, RSI, SMA trend analysis |
 | **Gamma** | 20-50% | Options market structure |
 | **Volume Bias** | 20-30% | Put/call ratio analysis |
 | **Valuation** | 10-20% | Fundamental fair value |
@@ -84,8 +84,8 @@ A sophisticated algorithmic trading signal generator that combines sentiment ana
 
 ### Market Regimes
 
-- **Fear Regime (VIX >30)**: Heavy gamma weighting, ignore sentiment noise
-- **Complacency (VIX <15)**: Sentiment-driven, hype matters
+- **Fear Regime (VIX >30)**: Heavy gamma weighting, focus on technical signals
+- **Complacency (VIX <15)**: Technical-driven, trend analysis focus
 - **Normal Market**: Balanced 20/30/30/20 allocation
 
 ## 🎨 Interface
@@ -105,7 +105,7 @@ A sophisticated algorithmic trading signal generator that combines sentiment ana
   "confidence": "HIGH",
   "regime": "NORMAL (VIX: 20.0)",
   "components": {
-    "sentiment": "85.5/100",
+    "technical": "85.5/100",
     "gamma": "43.4/100", 
     "volume": "100.0/100",
     "valuation": "0.0/100"
